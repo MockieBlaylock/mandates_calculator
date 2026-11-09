@@ -83,7 +83,82 @@
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(36, 83, 214, .15);
   }
-  .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .adjust {
+    background: #f6f8fc;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .adjust-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .adjust h3 { margin: 0; font-size: 1rem; }
+  .adjust-header button { padding: 6px 16px; }
+  .adjust-controls { display: flex; flex-wrap: wrap; gap: 8px; }
+  .adjust select {
+    flex: 1 1 130px;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font: inherit;
+    background: #fff;
+    color: var(--text);
+  }
+  .adjust select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(36, 83, 214, .15);
+  }
+  .adjust input[type=text] { flex: 1 1 100px; width: 100px; min-width: 0; }
+  .adjust .secondary { background: #e2e7f1; }
+  .adjust .secondary:hover { background: #d5dbe8; }
+  /* The line's height is always reserved, so the message appearing or clearing moves nothing. */
+  .adjust-status {
+    color: var(--ok);
+    font-size: .9rem;
+    margin: 8px 0 0;
+    min-height: 1.5em;
+    white-space: nowrap;
+  }
+  .adjust-title { display: flex; align-items: center; gap: 8px; }
+  .adjust-apply { display: flex; align-items: center; gap: 8px; flex: none; }
+  .adjust-header .info {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border-radius: 50%;
+    flex: none;
+    font-size: .8rem;
+    line-height: 22px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    cursor: help;
+  }
+  .adjust-header .info:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 4px);
+    inset-inline: 0;
+    z-index: 10;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--text);
+    color: #fff;
+    font-size: .88rem;
+    font-weight: 400;
+    box-shadow: 0 6px 18px rgba(20, 35, 80, .25);
+    pointer-events: none;
+  }
+  .info:hover + .tooltip, .info:focus + .tooltip { display: block; }
+  .actions { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  #error { margin: 0 0 12px; }
   button {
     font: inherit;
     font-weight: 700;
@@ -105,8 +180,6 @@
     display: none;
   }
   .hint { color: var(--muted); font-size: .9rem; margin: 4px 0 0; }
-  .agreements { margin-top: 18px; font-size: .92rem; color: var(--muted); }
-  .agreements ul { margin: 6px 0 0; padding-inline-start: 18px; }
 
   .stats {
     display: grid;
@@ -133,8 +206,23 @@
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   th, td { padding: 9px 6px; text-align: right; border-bottom: 1px solid var(--border); }
   th { font-size: .82rem; color: var(--muted); font-weight: 600; }
-  td.seats { font-weight: 800; font-size: 1.15rem; text-align: center; }
-  th.c { text-align: center; }
+  td.seats { font-weight: 800; font-size: 1.15rem; text-align: center; white-space: nowrap; }
+  .seat-num { position: relative; display: inline-block; }
+  /* Positioned out of flow so a badge never moves the seat count beside it. */
+  .delta {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 100%;
+    margin-right: 6px;
+    padding: 1px 7px;
+    border-radius: 99px;
+    font-size: .78rem;
+    font-weight: 700;
+  }
+  .delta.up { background: #e6f5ec; color: var(--ok); }
+  .delta.down { background: var(--bad-soft); color: var(--bad); }
+  th.c { text-align: center; width: 96px; }
   tr.failed td { color: var(--muted); }
   .tag {
     display: inline-block;
@@ -161,6 +249,34 @@
 <main>
   <section class="card">
     <h2>הזנת תוצאות</h2>
+    <div class="adjust">
+      <div class="adjust-header">
+        <div class="adjust-title">
+          <h3>הוספה או הסרה של קולות</h3>
+          <button type="button" class="info" aria-label="מידע נוסף" aria-describedby="adjustTooltip">i</button>
+          <span class="tooltip" id="adjustTooltip" role="tooltip">הוספה מעלה את קולות המפלגה שנבחרה וגם את סך הקולות הכשרים. הסרה מפחיתה משניהם.</span>
+        </div>
+        <div class="adjust-apply">
+          <button type="button" class="info" aria-label="מידע על כפתור עדכון" aria-describedby="adjustApplyTooltip">i</button>
+          <span class="tooltip" id="adjustApplyTooltip" role="tooltip">לחיצה על ״עדכון״ תשפיע רק על המספרים בצד ימין של המסך. כדי לראות את השפעת העדכון על חלוקת המנדטים (בצד שמאל), יש ללחוץ לאחר מכן על "חשב מנדטים".</span>
+          <button type="button" class="secondary" id="adjustApply">עדכון</button>
+        </div>
+      </div>
+      <div class="adjust-controls">
+        <select id="adjustParty" aria-label="מפלגה"></select>
+        <select id="adjustAction" aria-label="פעולה">
+          <option value="add">הוספה</option>
+          <option value="remove">הסרה</option>
+        </select>
+        <input type="text" id="adjustAmount" inputmode="numeric" placeholder="מספר קולות" aria-label="מספר קולות">
+      </div>
+      <p class="adjust-status" id="adjustStatus" role="status"></p>
+      <div class="error" id="adjustError"></div>
+    </div>
+    <div class="error" id="error"></div>
+    <div class="actions">
+      <button class="primary" id="calc">חשב מנדטים</button>
+    </div>
     <div class="total-box">
       <label class="row">
         <span>סך הקולות הכשרים</span>
@@ -169,15 +285,6 @@
       <p class="hint">כולל קולות למפלגות קטנות שאינן ברשימה. אחוז החסימה: 3.25%</p>
     </div>
     <div id="partyInputs"></div>
-    <div class="error" id="error"></div>
-    <div class="actions">
-      <button class="primary" id="calc">חשב מנדטים</button>
-      <button class="secondary" id="reset">איפוס</button>
-    </div>
-    <div class="agreements">
-      <strong>הסכמי עודפים:</strong>
-      <ul id="agreementList"></ul>
-    </div>
   </section>
 
   <section class="card">
@@ -233,33 +340,18 @@ PARTIES.forEach((p, i) => {
     <input type="text" inputmode="numeric" placeholder="0" data-idx="${i}">`;
   partyInputs.appendChild(row);
 });
-document.getElementById("agreementList").innerHTML =
-  AGREEMENTS.map(([a, b]) => `<li>${a} – ${b}</li>`).join("");
 
 const inputs = [document.getElementById("total"), ...partyInputs.querySelectorAll("input")];
 
-// Format numbers with thousand separators while typing, and remember values locally
+// Format numbers with thousand separators while typing
 inputs.forEach(inp => {
   inp.addEventListener("input", () => {
     const n = parseNum(inp.value);
     if (!isNaN(n) && inp.value.trim() !== "") inp.value = fmt(n);
-    save();
   });
   inp.addEventListener("keydown", e => { if (e.key === "Enter") calculate(); });
 });
 
-// The key is versioned so values saved before the defaults existed don't hide them.
-const STORAGE_KEY = "knesset-votes-v2";
-
-function save() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs.map(i => i.value))); } catch {}
-}
-function load() {
-  try {
-    const vals = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-    if (Array.isArray(vals)) vals.forEach((v, i) => { if (inputs[i]) inputs[i].value = v; });
-  } catch {}
-}
 function applyDefaults() {
   inputs[0].value = fmt(DEFAULT_TOTAL);
   PARTIES.forEach((p, i) => { inputs[i + 1].value = fmt(p.defaultVotes); });
@@ -328,8 +420,20 @@ function showError(msg) {
   errorEl.style.display = "block";
 }
 
+// Seats from the last successful calculation, used to show what each click changed.
+let lastSeats = null;
+
+function deltaBadge(party, previous) {
+  const delta = previous ? party.seats - previous[party.name] : 0;
+  if (delta === 0) return "";
+  return delta > 0
+    ? `<span class="delta up" dir="ltr">+${delta}</span>`
+    : `<span class="delta down" dir="ltr">-${-delta}</span>`;
+}
+
 function calculate() {
   errorEl.style.display = "none";
+  adjustError.style.display = "none";
   const total = parseNum(inputs[0].value);
   const votes = inputs.slice(1).map(i => parseNum(i.value));
 
@@ -340,6 +444,9 @@ function calculate() {
 
   const r = allocate(total, votes);
   if (r.qualifiedVotes === 0) return showError("אף מפלגה לא עברה את אחוז החסימה.");
+
+  const previousSeats = lastSeats;
+  lastSeats = Object.fromEntries(r.parties.map(p => [p.name, p.seats]));
 
   const sorted = [...r.parties].sort((a, b) => b.seats - a.seats || b.votes - a.votes);
   const maxSeats = Math.max(...sorted.map(p => p.seats), 1);
@@ -372,27 +479,79 @@ function calculate() {
             </td>
             <td>${fmt(p.votes)}</td>
             <td>${(p.votes / total * 100).toFixed(2)}%</td>
-            <td class="seats">${p.seats}</td>
+            <td class="seats"><span class="seat-num">${p.seats}${deltaBadge(p, previousSeats)}</span></td>
           </tr>`).join("")}
       </tbody>
     </table>
     <div class="note">
-      סך המנדטים: <strong>${r.parties.reduce((s, p) => s + p.seats, 0)}</strong>
       ${voidAgreements.length ? `<ul>${voidAgreements.map(([a, b]) =>
         `<li>הסכם העודפים ${a} – ${b} בוטל, מאחר שלפחות אחת מהמפלגות לא עברה את אחוז החסימה.</li>`).join("")}</ul>` : ""}
     </div>`;
 }
 
-document.getElementById("calc").addEventListener("click", calculate);
-document.getElementById("reset").addEventListener("click", () => {
-  inputs.forEach(i => (i.value = ""));
-  try { localStorage.removeItem(STORAGE_KEY); } catch {}
-  errorEl.style.display = "none";
-  resultsEl.innerHTML = '<div class="empty">הזינו נתונים ולחצו על "חשב מנדטים"</div>';
+// ---------- Add or remove votes for one party ----------
+const adjustParty = document.getElementById("adjustParty");
+const adjustAction = document.getElementById("adjustAction");
+const adjustAmount = document.getElementById("adjustAmount");
+const adjustStatus = document.getElementById("adjustStatus");
+const adjustError = document.getElementById("adjustError");
+
+adjustParty.innerHTML = PARTIES.map((p, i) => `<option value="${i}">${p.name}</option>`).join("");
+
+// Hebrew: the prefix ל absorbs a leading definite article (ל + הליכוד = לליכוד).
+const toParty = name => "ל" + name.replace(/^ה/, "");
+
+function showAdjustError(msg) {
+  adjustError.textContent = msg;
+  adjustError.style.display = "block";
+}
+
+const STATUS_DURATION_MS = 3000;
+let adjustStatusTimer;
+
+function applyAdjustment() {
+  adjustError.style.display = "none";
+  adjustStatus.textContent = "";
+  clearTimeout(adjustStatusTimer);
+
+  const party = PARTIES[Number(adjustParty.value)];
+  const partyInput = inputs[Number(adjustParty.value) + 1];
+  const total = parseNum(inputs[0].value);
+  const votes = parseNum(partyInput.value);
+  const amount = parseNum(adjustAmount.value);
+  const isAdd = adjustAction.value === "add";
+
+  if (isNaN(total) || isNaN(votes)) return showAdjustError("יש להזין מספרים שלמים בלבד.");
+  if (total <= 0) return showAdjustError("יש להזין קודם את סך הקולות הכשרים.");
+  if (isNaN(amount) || amount <= 0) return showAdjustError("יש להזין מספר קולות שלם וחיובי.");
+  if (!isAdd && amount > votes) {
+    return showAdjustError(`לא ניתן להסיר ${fmt(amount)} קולות: ${toParty(party.name)} יש רק ${fmt(votes)} קולות.`);
+  }
+  if (!isAdd && amount > total) {
+    return showAdjustError(`לא ניתן להסיר ${fmt(amount)} קולות: סך הקולות הכשרים הוא רק ${fmt(total)}.`);
+  }
+
+  const delta = isAdd ? amount : -amount;
+  partyInput.value = fmt(votes + delta);
+  inputs[0].value = fmt(total + delta);
+  adjustAmount.value = "";
+  adjustStatus.textContent = isAdd
+    ? `נוספו ${fmt(amount)} קולות ${toParty(party.name)}.`
+    : `הוסרו ${fmt(amount)} קולות מ${party.name}.`;
+  adjustStatusTimer = setTimeout(() => { adjustStatus.textContent = ""; }, STATUS_DURATION_MS);
+}
+
+adjustAmount.addEventListener("input", () => {
+  const n = parseNum(adjustAmount.value);
+  if (!isNaN(n) && adjustAmount.value.trim() !== "") adjustAmount.value = fmt(n);
 });
+adjustAmount.addEventListener("keydown", e => { if (e.key === "Enter") applyAdjustment(); });
+document.getElementById("adjustApply").addEventListener("click", applyAdjustment);
+
+document.getElementById("calc").addEventListener("click", calculate);
 
 applyDefaults();
-load();
+calculate();
 </script>
 </body>
 </html>
