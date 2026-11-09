@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מחשבון מנדטים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --text: #1c2333;
+    --muted: #6b7489;
+    --border: #e1e6f0;
+    --accent: #2453d6;
+    --accent-soft: #e8eefc;
+    --ok: #1d8a4e;
+    --bad: #c23b3b;
+    --bad-soft: #fdecec;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Assistant", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  header {
+    background: linear-gradient(135deg, #1b3fa8, #2f6fe0);
+    color: #fff;
+    padding: 32px 16px 72px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 6px; font-size: 2rem; font-weight: 800; }
+  header p { margin: 0; opacity: .85; }
+  main {
+    max-width: 1100px;
+    margin: -48px auto 40px;
+    padding: 0 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(20, 35, 80, .08);
+    padding: 22px;
+  }
+  .card h2 { margin: 0 0 14px; font-size: 1.25rem; }
+  .total-box {
+    background: var(--accent-soft);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  label.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+  }
+  label.row span { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  input[type=text] {
+    width: 150px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font: inherit;
+    text-align: left;
+    direction: ltr;
+    background: #fff;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input[type=text]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(36, 83, 214, .15);
+  }
+  .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    font-weight: 700;
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 18px;
+    cursor: pointer;
+  }
+  .primary { background: var(--accent); color: #fff; flex: 1; }
+  .primary:hover { background: #1b45b8; }
+  .secondary { background: #eef1f7; color: var(--text); }
+  .secondary:hover { background: #e2e7f1; }
+  .error {
+    background: var(--bad-soft);
+    color: var(--bad);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-top: 12px;
+    display: none;
+  }
+  .hint { color: var(--muted); font-size: .9rem; margin: 4px 0 0; }
+  .agreements { margin-top: 18px; font-size: .92rem; color: var(--muted); }
+  .agreements ul { margin: 6px 0 0; padding-inline-start: 18px; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .stat { background: #f6f8fc; border-radius: 12px; padding: 10px 12px; }
+  .stat .k { font-size: .8rem; color: var(--muted); }
+  .stat .v { font-size: 1.15rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  @media (max-width: 520px) { .stats { grid-template-columns: 1fr 1fr; } }
+
+  .seatbar {
+    display: flex;
+    height: 26px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 6px;
+    background: #eef1f7;
+  }
+  .seatbar div { height: 100%; transition: width .4s; }
+  .seatbar-scale { display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); margin-bottom: 16px; }
+
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 9px 6px; text-align: right; border-bottom: 1px solid var(--border); }
+  th { font-size: .82rem; color: var(--muted); font-weight: 600; }
+  td.seats { font-weight: 800; font-size: 1.15rem; text-align: center; }
+  th.c { text-align: center; }
+  tr.failed td { color: var(--muted); }
+  .tag {
+    display: inline-block;
+    font-size: .75rem;
+    padding: 1px 8px;
+    border-radius: 99px;
+    background: var(--bad-soft);
+    color: var(--bad);
+    font-weight: 600;
+  }
+  .tag.ok { background: #e6f5ec; color: var(--ok); }
+  .bar { height: 6px; border-radius: 3px; margin-top: 4px; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+  .note { font-size: .85rem; color: var(--muted); margin-top: 14px; }
+  .note ul { margin: 6px 0 0; padding-inline-start: 18px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>מחשבון מנדטים – בחירות לכנסת</h1>
+  <p>הזינו את מספר הקולות שקיבלה כל מפלגה, וקבלו את חלוקת 120 המנדטים לפי שיטת באדר-עופר</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>הזנת תוצאות</h2>
+    <div class="total-box">
+      <label class="row">
+        <span>סך הקולות הכשרים</span>
+        <input type="text" id="total" inputmode="numeric" placeholder="0">
+      </label>
+      <p class="hint">כולל קולות למפלגות קטנות שאינן ברשימה. אחוז החסימה: 3.25%</p>
+    </div>
+    <div id="partyInputs"></div>
+    <div class="error" id="error"></div>
+    <div class="actions">
+      <button class="primary" id="calc">חשב מנדטים</button>
+      <button class="secondary" id="reset">איפוס</button>
+    </div>
+    <div class="agreements">
+      <strong>הסכמי עודפים:</strong>
+      <ul id="agreementList"></ul>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>תוצאות</h2>
+    <div id="results"><div class="empty">הזינו נתונים ולחצו על "חשב מנדטים"</div></div>
+  </section>
+</main>
+
+<script>
+const SEATS = 120;
+const THRESHOLD = 0.0325;
+
+const PARTIES = [
+  { name: "הליכוד",       color: "#1f5bd1", defaultVotes: 1167591 },
+  { name: "ישר",          color: "#0f9fb5", defaultVotes: 913629 },
+  { name: "ביחד",         color: "#7a4fd6", defaultVotes: 532018 },
+  { name: "המשותפת",      color: "#2e9e5b", defaultVotes: 500755 },
+  { name: "רעמ",          color: "#5aa63a", defaultVotes: 337720 },
+  { name: "יהדות התורה",  color: "#3d3d3d", defaultVotes: 312632 },
+  { name: "שס",           color: "#1d2a6b", defaultVotes: 299533 },
+  { name: "ישראל ביתנו",  color: "#2a86d9", defaultVotes: 337450 },
+  { name: "הדמוקרטים",    color: "#d8344a", defaultVotes: 366278 },
+  { name: "עוצמה יהודית", color: "#e08a1e", defaultVotes: 326793 },
+  { name: "הציונות הדתית", color: "#8a6a2b", defaultVotes: 290549 },
+  { name: "המילואמניקים", color: "#5c7a3a", defaultVotes: 155199 },
+  { name: "עמך ישראל",    color: "#b04f8f", defaultVotes: 95764 },
+];
+
+// Default total valid votes, including votes for small parties not listed above.
+const DEFAULT_TOTAL = 5691426;
+
+const AGREEMENTS = [
+  ["ישראל ביתנו", "ביחד"],
+  ["הדמוקרטים", "ישר"],
+  ["רעמ", "המשותפת"],
+  ["הליכוד", "הציונות הדתית"],
+  ["שס", "יהדות התורה"],
+];
+
+const fmt = n => n.toLocaleString("he-IL");
+const parseNum = s => {
+  const clean = String(s).replace(/[,\s]/g, "");
+  if (clean === "") return 0;
+  return /^\d+$/.test(clean) ? Number(clean) : NaN;
+};
+
+// ---------- UI construction ----------
+const partyInputs = document.getElementById("partyInputs");
+PARTIES.forEach((p, i) => {
+  const row = document.createElement("label");
+  row.className = "row";
+  row.innerHTML = `<span><i class="dot" style="background:${p.color}"></i>${p.name}</span>
+    <input type="text" inputmode="numeric" placeholder="0" data-idx="${i}">`;
+  partyInputs.appendChild(row);
+});
+document.getElementById("agreementList").innerHTML =
+  AGREEMENTS.map(([a, b]) => `<li>${a} – ${b}</li>`).join("");
+
+const inputs = [document.getElementById("total"), ...partyInputs.querySelectorAll("input")];
+
+// Format numbers with thousand separators while typing, and remember values locally
+inputs.forEach(inp => {
+  inp.addEventListener("input", () => {
+    const n = parseNum(inp.value);
+    if (!isNaN(n) && inp.value.trim() !== "") inp.value = fmt(n);
+    save();
+  });
+  inp.addEventListener("keydown", e => { if (e.key === "Enter") calculate(); });
+});
+
+// The key is versioned so values saved before the defaults existed don't hide them.
+const STORAGE_KEY = "knesset-votes-v2";
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs.map(i => i.value))); } catch {}
+}
+function load() {
+  try {
+    const vals = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+    if (Array.isArray(vals)) vals.forEach((v, i) => { if (inputs[i]) inputs[i].value = v; });
+  } catch {}
+}
+function applyDefaults() {
+  inputs[0].value = fmt(DEFAULT_TOTAL);
+  PARTIES.forEach((p, i) => { inputs[i + 1].value = fmt(p.defaultVotes); });
+}
+
+// ---------- Allocation logic (Bader-Ofer) ----------
+function allocate(total, votes) {
+  const thresholdVotes = total * THRESHOLD;
+  const parties = PARTIES.map((p, i) => ({
+    ...p, votes: votes[i], passed: votes[i] >= thresholdVotes, seats: 0,
+  }));
+  const byName = Object.fromEntries(parties.map(p => [p.name, p]));
+  const qualified = parties.filter(p => p.passed);
+  const qualifiedVotes = qualified.reduce((s, p) => s + p.votes, 0);
+  if (qualifiedVotes === 0) return { parties, thresholdVotes, qualifiedVotes, quota: 0, activeAgreements: [] };
+
+  // 1. General quota: votes of lists that passed the threshold / 120. Each list gets floor(votes / quota).
+  const quota = qualifiedVotes / SEATS;
+  qualified.forEach(p => { p.seats = Math.floor(p.votes * SEATS / qualifiedVotes); });
+
+  // 2. Surplus agreements count only if both lists passed the threshold.
+  //    Such a pair is treated as one entity when distributing the remaining seats.
+  const activeAgreements = AGREEMENTS.filter(([a, b]) => byName[a].passed && byName[b].passed);
+  const inAgreement = new Set(activeAgreements.flat());
+  const entities = [
+    ...activeAgreements.map(([a, b]) => ({ members: [byName[a], byName[b]] })),
+    ...qualified.filter(p => !inAgreement.has(p.name)).map(p => ({ members: [p] })),
+  ];
+  entities.forEach(e => {
+    e.votes = e.members.reduce((s, p) => s + p.votes, 0);
+    e.seats = e.members.reduce((s, p) => s + p.seats, 0);
+  });
+
+  // 3. Remaining seats: one at a time to the entity with the highest votes / (seats + 1)
+  let allocated = entities.reduce((s, e) => s + e.seats, 0);
+  while (allocated < SEATS) {
+    let best = entities[0];
+    for (const e of entities) {
+      if (e.votes / (e.seats + 1) > best.votes / (best.seats + 1)) best = e;
+    }
+    best.seats++;
+    allocated++;
+  }
+
+  // 4. Split each pair's seats between its two lists by the same method
+  for (const e of entities) {
+    if (e.members.length < 2) { e.members[0].seats = e.seats; continue; }
+    e.members.forEach(p => { p.seats = Math.floor(p.votes * e.seats / e.votes); });
+    let given = e.members.reduce((s, p) => s + p.seats, 0);
+    while (given < e.seats) {
+      const best = e.members.reduce((a, b) => (b.votes / (b.seats + 1) > a.votes / (a.seats + 1) ? b : a));
+      best.seats++;
+      given++;
+    }
+  }
+
+  return { parties, thresholdVotes, qualifiedVotes, quota, activeAgreements };
+}
+
+// ---------- Render ----------
+const errorEl = document.getElementById("error");
+const resultsEl = document.getElementById("results");
+
+function showError(msg) {
+  errorEl.textContent = msg;
+  errorEl.style.display = "block";
+}
+
+function calculate() {
+  errorEl.style.display = "none";
+  const total = parseNum(inputs[0].value);
+  const votes = inputs.slice(1).map(i => parseNum(i.value));
+
+  if (isNaN(total) || votes.some(isNaN)) return showError("יש להזין מספרים שלמים בלבד.");
+  if (total <= 0) return showError("יש להזין את סך הקולות הכשרים.");
+  const sum = votes.reduce((a, b) => a + b, 0);
+  if (sum > total) return showError(`סכום הקולות למפלגות (${fmt(sum)}) גדול מסך הקולות הכשרים (${fmt(total)}).`);
+
+  const r = allocate(total, votes);
+  if (r.qualifiedVotes === 0) return showError("אף מפלגה לא עברה את אחוז החסימה.");
+
+  const sorted = [...r.parties].sort((a, b) => b.seats - a.seats || b.votes - a.votes);
+  const maxSeats = Math.max(...sorted.map(p => p.seats), 1);
+  const winners = sorted.filter(p => p.seats > 0);
+  const partnerOf = {};
+  r.activeAgreements.forEach(([a, b]) => { partnerOf[a] = b; partnerOf[b] = a; });
+
+  const voidAgreements = AGREEMENTS.filter(ag => !r.activeAgreements.includes(ag));
+
+  resultsEl.innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="k">רף החסימה (קולות)</div><div class="v">${fmt(Math.ceil(r.thresholdVotes))}</div></div>
+      <div class="stat"><div class="k">קולות למפלגות שעברו</div><div class="v">${fmt(r.qualifiedVotes)}</div></div>
+      <div class="stat"><div class="k">מודד כללי (קולות למנדט)</div><div class="v">${fmt(Math.round(r.quota))}</div></div>
+    </div>
+    <div class="seatbar">
+      ${winners.map(p => `<div title="${p.name}: ${p.seats}" style="width:${p.seats / SEATS * 100}%;background:${p.color}"></div>`).join("")}
+    </div>
+    <div class="seatbar-scale"><span>0</span><span>61</span><span>120</span></div>
+    <table>
+      <thead><tr><th>מפלגה</th><th>קולות</th><th>אחוז</th><th class="c">מנדטים</th></tr></thead>
+      <tbody>
+        ${sorted.map(p => `
+          <tr class="${p.passed ? "" : "failed"}">
+            <td>
+              <span style="font-weight:600">${p.name}</span>
+              ${p.passed ? "" : ' <span class="tag">לא עברה</span>'}
+              ${partnerOf[p.name] ? ` <span class="tag ok">עודפים: ${partnerOf[p.name]}</span>` : ""}
+              <div class="bar" style="width:${p.seats / maxSeats * 100}%;background:${p.color}"></div>
+            </td>
+            <td>${fmt(p.votes)}</td>
+            <td>${(p.votes / total * 100).toFixed(2)}%</td>
+            <td class="seats">${p.seats}</td>
+          </tr>`).join("")}
+      </tbody>
+    </table>
+    <div class="note">
+      סך המנדטים: <strong>${r.parties.reduce((s, p) => s + p.seats, 0)}</strong>
+      ${voidAgreements.length ? `<ul>${voidAgreements.map(([a, b]) =>
+        `<li>הסכם העודפים ${a} – ${b} בוטל, מאחר שלפחות אחת מהמפלגות לא עברה את אחוז החסימה.</li>`).join("")}</ul>` : ""}
+    </div>`;
+}
+
+document.getElementById("calc").addEventListener("click", calculate);
+document.getElementById("reset").addEventListener("click", () => {
+  inputs.forEach(i => (i.value = ""));
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  errorEl.style.display = "none";
+  resultsEl.innerHTML = '<div class="empty">הזינו נתונים ולחצו על "חשב מנדטים"</div>';
+});
+
+applyDefaults();
+load();
+</script>
+</body>
+</html>
